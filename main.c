@@ -30,7 +30,7 @@ void ledBlinker(int number, int flag) {
     }
 }
 
-int main() { // Changed void main() to int main()
+void main() {
     char number[10]; // Buffer for user input
 
     while (1) {
@@ -40,13 +40,12 @@ int main() { // Changed void main() to int main()
             continue;
         }
 
-        for (int i = 0; number[i] != '\0' && number[i] != '\n'; i++) { // Iterating over input
+        for (int i = 0; number[i] != '\0' && number[i] != '\n'; i++) {
             if (stop == 1) {
                 break;
             }
-            ledBlinker(number[i] - '0', flag); // Convert char to int
-            usleep(500000); // 500ms
+            ledBlinker(number[i] - '0', flag); // Cast char to int
+            usleep(500000);                    // 500ms
         }
     }
-    return 0;
 }
