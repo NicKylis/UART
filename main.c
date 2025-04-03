@@ -1,24 +1,52 @@
 #include <stdio.h>
-#include <time.h>
+#include <stdlib.h>
+#include <unistd.h>
 
-char *str = "Hello, World!";
-void setLedOn(){
-    printf("LED is ON! \n");
-};
-void ledBlinker(int number, int flag){
-    if(number % 2 == 0){
+int flag = 0;
+int stop = 0;
+
+void setLedOn() {
+    flag = 1;
+    printf("LED is ON!\n");
+}
+
+void setLedOff() {
+    flag = 0;
+    printf("LED is OFF!\n");
+}
+
+void ledBlinker(int number, int flag) {
+    if (number % 2 == 0) {
         setLedOn();
-        sleep(0.2);
-    }
-    else{
-        setLedOn();
+        usleep(200000); // 200ms
+        setLedOff();
+        usleep(200000);
+    } else {
+        if (flag == 1) {
+            setLedOff();
+        } else {
+            setLedOn();
+        }
     }
 }
 
-void main(){
-    int flag = 0;
-    while(1){
-        
-        sleep(0.5);
-    };
+int main() { // Changed void main() to int main()
+    char number[10]; // Buffer for user input
+
+    while (1) {
+        printf("Give me a number: ");
+        if (fgets(number, sizeof(number), stdin) == NULL) {
+            printf("Invalid input! Try again.\n");
+            continue;
+        }
+
+        for (int i = 0; number[i] != '\0' && number[i] != '\n'; i++) { // Iterating over input
+            if (stop == 1) {
+                break;
+            }
+            ledBlinker(number[i] - '0', flag); // Convert char to int
+            usleep(500000); // 500ms
+        }
+    }
+    return 0;
 }
