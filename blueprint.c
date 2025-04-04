@@ -57,28 +57,27 @@ void main() {
     
         for (int i = 0; number[i] != '\0' && number[i] != '\n'; i++) {
         
-        // Custom condition for ending in '-'
-        if (special_case);
-        else {
-        if(button == 1){
-            button = 0;
-            count++;
-            printf("Interrupt: Button pressed. LED locked. Count = %d\n", count);
-            while(1){
-                if(button == 1) break;
+            // Custom condition for ending in '-'
+            if (special_case);
+            else {
+                if(button == 1){
+                    button = 0;
+                    count++;
+                    printf("Interrupt: Button pressed. LED locked. Count = %d\n", count);
+                    while(1){
+                        if(button == 1) break;
+                    }
+                }
+                if (stop == 1) {
+                        break;
+                    }
+            }    
+                // Only process numeric characters
+                if (number[i] >= '0' && number[i] <= '9') {
+                    result = result * 10 + (number[i] - '0');
+                    ledBlinker(number[i] - '0', flag); // Blink for each digit
+                    usleep(500000);                    // 500ms
+                }
             }
-        }
-        if (stop == 1) {
-                break;
-            }
-        }    
-            // Only process numeric characters
-            if (number[i] >= '0' && number[i] <= '9') {
-                result = result * 10 + (number[i] - '0');
-                ledBlinker(number[i] - '0', flag); // Blink for each digit
-                usleep(500000);                    // 500ms
-            }
-        }
-    
     }
 }
