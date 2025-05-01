@@ -33,29 +33,29 @@ void ledBlinker(int number, int flag) {
 }
 
 void main() {
-    char number[10]; // Buffer for user input
+    char BUFFER_INIT[10]; // Buffer for user input
 
     while (1) {
         printf("Give me a number: ");
-        if (fgets(number, sizeof(number), stdin) == NULL) {
+        if (fgets(BUFFER_INIT, sizeof(BUFFER_INIT), stdin) == NULL) {
             printf("Invalid input! Try again.\n");
             continue;
         }
     
         int result = 0;  // To store the accumulated number
         int special_case = 0;  // Flag for string ending with '-'
-        int len = sizeof(number);
+        int len = sizeof(BUFFER_INIT);
         
         // Check if string ends with '-' (excluding newline)
-        if (len > 1 && number[len-1] == '\n' && number[len-2] == '-') {
+        if (len > 1 && BUFFER_INIT[len-1] == '\n' && BUFFER_INIT[len-2] == '-') {
             special_case = 1;
-            number[len-2] = '\0';  // Remove the '-' from processing
-        } else if (number[len-1] == '-') {
+            BUFFER_INIT[len-2] = '\0';  // Remove the '-' from processing
+        } else if (BUFFER_INIT[len-1] == '-') {
             special_case = 1;
-            number[len-1] = '\0';
+            BUFFER_INIT[len-1] = '\0';
         }
     
-        for (int i = 0; number[i] != '\0' && number[i] != '\n'; i++) {
+        for (int i = 0; BUFFER_INIT[i] != '\0' && BUFFER_INIT[i] != '\n'; i++) {
         
             // Custom condition for ending in '-'
             if (special_case);
@@ -73,9 +73,9 @@ void main() {
                     }
             }    
                 // Only process numeric characters
-                if (number[i] >= '0' && number[i] <= '9') {
-                    result = result * 10 + (number[i] - '0');
-                    ledBlinker(number[i] - '0', flag); // Blink for each digit
+                if (BUFFER_INIT[i] >= '0' && BUFFER_INIT[i] <= '9') {
+                    result = result * 10 + (BUFFER_INIT[i] - '0');
+                    ledBlinker(BUFFER_INIT[i] - '0', flag); // Blink for each digit
                     usleep(500000);                    // 500ms
                 }
             }
