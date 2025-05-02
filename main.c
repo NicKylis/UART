@@ -4,8 +4,12 @@
 #include <string.h>
 #include "uart.h"
 #include "queue.h"
+#include "delay.h"
+#include "leds.h"
+#include "gpio.h"
 
 #define BUFF_SIZE 128
+#define BUTTON_PIN 13
 
 Queue rx_queue;
 
@@ -16,23 +20,29 @@ volatile int button = 0;
 
 // Simulated GPIO (replace with actual GPIO read/write in your platform)
 void setLedOn() {
+	if(!button){
     flag = 1;
-    gpio_write_led(1);
+    leds_set(1, 0, 0);
     uart_print("LED is ON!\r\n");
+	}
+	else uart_print("Tried to turn the LED ON, but it is locked!\r\n");
 }
 
 void setLedOff() {
+	if(!button){
     flag = 0;
-    gpio_write_led(0);
+    leds_set(0, 0, 0);
     uart_print("LED is OFF!\r\n");
+	}
+	else uart_print("Tried to turn the LED OFF, but it is locked!\r\n");
 }
 
 void ledBlinker(int number, int flag) {
     if (number % 2 == 0) {
         setLedOn();
-        platform_delay(200); // 200 ms
+        delay_ms(200); // 200 ms
         setLedOff();
-        platform_delay(200);
+        delay_ms(200);
     } else {
         if (flag == 1)
             setLedOff();
@@ -50,7 +60,16 @@ void uart_rx_isr(uint8_t rx) {
 
 // Simulated button read
 int read_button() {
-    return gpio_read_button(); // Platform-specific
+    return !gpio_get(P_SW);
+}
+
+void button_interrupt() {
+	  button = !button;
+    count++;
+    uart_print("Interrupt: Button pressed. LED locked.\r\n");
+		char msg[64];
+		sprintf(msg, "Interrupt: Button pressed %d times.\r\n", count);
+		uart_print(msg);
 }
 
 int main() {
@@ -63,6 +82,9 @@ int main() {
     uart_set_rx_callback(uart_rx_isr);
     uart_enable();
     __enable_irq();
+	  
+		gpio_set_mode(P_LED_R, Output);
+		gpio_set_mode(P_SW, Input);		
 
     uart_print("\r\n");
 
@@ -102,22 +124,23 @@ int main() {
 
         int result = 0;
         for (int i = 0; buff[i] != '\0'; i++) {
+					// Simulate button press
+            if (read_button()) {
+                button = !button;
+                count++;
+                uart_print("Interrupt: Button pressed. LED locked.\r\n");
+								char msg[64];
+								sprintf(msg, "Interrupt: Button pressed %d times.\r\n", count);
+								uart_print(msg);
+            }
+
             if (buff[i] >= '0' && buff[i] <= '9') {
                 result = result * 10 + (buff[i] - '0');
                 ledBlinker(buff[i] - '0', flag);
-                platform_delay(500);
+                delay_ms(500);
             }
 
-            // Simulate button press
-            if (read_button()) {
-                button = 1;
-                count++;
-                uart_print("Interrupt: Button pressed. LED locked.\r\n");
-
-                // Wait for button release to unlock
-                while (read_button());
-            }
-
+            
             if (stop) {
                 break;
             }
