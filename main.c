@@ -58,11 +58,12 @@ void uart_rx_isr(uint8_t rx) {
     }
 }
 
-// Simulated button read
+// Βutton read
 int read_button() {
     return !gpio_get(P_SW);
 }
 
+// Button interrupt
 void button_interrupt() {
 	  button = !button;
     count++;
@@ -70,6 +71,18 @@ void button_interrupt() {
 		char msg[64];
 		sprintf(msg, "Interrupt: Button pressed %d times.\r\n", count);
 		uart_print(msg);
+}
+
+void main_analysis() {
+    if (buff[i] >= '0' && buff[i] <= '9') {
+        result = result * 10 + (buff[i] - '0');
+        ledBlinker(buff[i] - '0', flag);
+        delay_ms(500);
+    }
+
+    if (stop) {
+        break;
+    }
 }
 
 int main() {
@@ -83,8 +96,8 @@ int main() {
     uart_enable();
     __enable_irq();
 	  
-		gpio_set_mode(P_LED_R, Output);
-		gpio_set_mode(P_SW, Input);		
+	gpio_set_mode(P_LED_R, Output);
+	gpio_set_mode(P_SW, Input);		
 
     uart_print("\r\n");
 
@@ -120,19 +133,22 @@ int main() {
         if (buff_index > 0 && buff[buff_index - 1] == '-') {
             special_case = 1;
             buff[buff_index - 1] = '\0'; // Remove the '-'
+            while(1){
+                main_analysis();
+            }
         }
 
         int result = 0;
         for (int i = 0; buff[i] != '\0'; i++) {
-					// Simulate button press
-            if (read_button()) {
-                button = !button;
-                count++;
-                uart_print("Interrupt: Button pressed. LED locked.\r\n");
-								char msg[64];
-								sprintf(msg, "Interrupt: Button pressed %d times.\r\n", count);
-								uart_print(msg);
-            }
+			// Simulate button press
+            // if (read_button()) {
+            //     button = !button;
+            //     count++;
+            //     uart_print("Interrupt: Button pressed. LED locked.\r\n");
+			// 					char msg[64];
+			// 					sprintf(msg, "Interrupt: Button pressed %d times.\r\n", count);
+			// 					uart_print(msg);
+            // }
 
             if (buff[i] >= '0' && buff[i] <= '9') {
                 result = result * 10 + (buff[i] - '0');
