@@ -4,9 +4,9 @@
 #include <string.h>
 #include "uart.h"
 #include "queue.h"
-#include "delay.h"
 #include "leds.h"
 #include "gpio.h"
+#include "timer.h"
 
 #define BUFF_SIZE 128
 #define BUTTON_PIN 13
@@ -14,6 +14,9 @@
 Queue rx_queue;
 
 volatile int flag = 0;
+volatile int time_flag = 0;
+volatile int time_flag_200 = 0;
+volatile int time_flag_500 = 0;
 volatile int stop = 0;
 volatile int count = 0;
 volatile int button = 0;
@@ -40,9 +43,13 @@ void setLedOff() {
 void ledBlinker(int number, int flag) {
     if (number % 2 == 0) {
         setLedOn();
-        delay_ms(200); // 200 ms
+        while(!time_flag_200){
+					__WFI();
+				}
         setLedOff();
-        delay_ms(200);
+        while(!time_flag_200){
+					__WFI();
+				};
     } else {
         if (flag == 1)
             setLedOff();
@@ -58,46 +65,59 @@ void uart_rx_isr(uint8_t rx) {
     }
 }
 
-// Βutton read
+// Simulated button read
 int read_button() {
     return !gpio_get(P_SW);
 }
 
-// Button interrupt
-void button_interrupt() {
-	  button = !button;
-    count++;
-    uart_print("Interrupt: Button pressed. LED locked.\r\n");
-		char msg[64];
-		sprintf(msg, "Interrupt: Button pressed %d times.\r\n", count);
-		uart_print(msg);
+void button_interrupt(int status) {
+    if (status & (1 << 13)) { // Since PC_13 is pin index 13
+        button = !button;
+        count++;
+
+        uart_print("Interrupt: Button pressed. LED lock toggled.\r\n");
+
+        char msg[64];
+        sprintf(msg, "Interrupt: Button pressed %d times.\r\n", count);
+        uart_print(msg);
+    }
 }
 
-void main_analysis() {
-    if (buff[i] >= '0' && buff[i] <= '9') {
-        result = result * 10 + (buff[i] - '0');
-        ledBlinker(buff[i] - '0', flag);
-        delay_ms(500);
-    }
-
-    if (stop) {
-        break;
-    }
+void analysis(){
+	  time_flag++;
+		if (time_flag % 2 == 0) {
+			time_flag_200 = 1;
+		}else
+		{
+			time_flag_200 = 0;
+		}
+		if (time_flag % 5 == 0) {
+			time_flag_500 = 1;
+		}else
+			{
+				time_flag_500 = 0;
+			}
 }
 
 int main() {
     uint8_t rx_char = 0;
     char buff[BUFF_SIZE];
     uint32_t buff_index;
-
+		
     queue_init(&rx_queue, 128);
     uart_init(115200);
     uart_set_rx_callback(uart_rx_isr);
     uart_enable();
     __enable_irq();
 	  
-	gpio_set_mode(P_LED_R, Output);
-	gpio_set_mode(P_SW, Input);		
+		gpio_set_mode(P_SW, PullUp);         // Set pin as input with pull-up resistor
+		gpio_set_trigger(P_SW, Rising);     // Trigger interrupt on falling edge (button press)
+		gpio_set_callback(P_SW, button_interrupt);  // Register the callback
+		timer_set_callback(analysis);
+
+		gpio_set_mode(P_LED_R, Output);
+		// gpio_set_mode(P_SW, Input);
+		timer_init(100000);
 
     uart_print("\r\n");
 
@@ -133,29 +153,26 @@ int main() {
         if (buff_index > 0 && buff[buff_index - 1] == '-') {
             special_case = 1;
             buff[buff_index - 1] = '\0'; // Remove the '-'
-            while(1){
-                main_analysis();
-            }
         }
 
         int result = 0;
         for (int i = 0; buff[i] != '\0'; i++) {
-			// Simulate button press
-            // if (read_button()) {
-            //     button = !button;
-            //     count++;
-            //     uart_print("Interrupt: Button pressed. LED locked.\r\n");
-			// 					char msg[64];
-			// 					sprintf(msg, "Interrupt: Button pressed %d times.\r\n", count);
-			// 					uart_print(msg);
-            // }
-
-            if (buff[i] >= '0' && buff[i] <= '9') {
+					// Simulate button press
+            if (read_button()) {
+                button = !button;
+                count++;
+                uart_print("Interrupt: Button pressed. LED locked.\r\n");
+								char msg[64];
+								sprintf(msg, "Interrupt: Button pressed %d times.\r\n", count);
+								uart_print(msg);
+            }
+						if (buff[i] >= '0' && buff[i] <= '9') {
                 result = result * 10 + (buff[i] - '0');
                 ledBlinker(buff[i] - '0', flag);
-                delay_ms(500);
+                while(!time_flag_500){
+									__WFI();
+								}
             }
-
             
             if (stop) {
                 break;
