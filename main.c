@@ -26,7 +26,7 @@ volatile int button_interrupt_flag = 0;
 volatile int repeat_mode = 0;
 char repeat_buff[BUFF_SIZE];
 
-// Led control functions with UART logging
+// Simulated GPIO (replace with actual GPIO read/write in your platform)
 void setLedOn() {
     if (!button) {
         flag = 1;
@@ -47,7 +47,6 @@ void setLedOff() {
     }
 }
 
-// LED analysis function
 void ledBlinker(int number, int current_flag) {
 		if (led_locked) {
 			uart_print("Interrupt: Button pressed. LED lock toggled.\r\n");
@@ -80,7 +79,6 @@ void uart_rx_isr(uint8_t rx) {
     }
 }
 
-// Button interrupt handler
 void button_interrupt() {
     if (gpio_get(PC_13)) {
         count++;
@@ -92,7 +90,6 @@ void button_interrupt() {
     }
 }
 
-// Timer control function
 void analysis() {
     time_flag++;
 
@@ -194,6 +191,7 @@ int main() {
                         if (new_input_flag) break;
                         __WFI();
                     }
+										time_flag = 0;
                     time_flag_500 = 0;
                     time_flag_200 = 0;
                 }
